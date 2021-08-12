@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="Inhale">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+       	<!-- Make the app title different than the page title and configure icons - Android. -->
+   	<link rel="manifest" href="./manifest.json">
+	<!-- iOS icons -->
+	<link rel="apple-touch-icon" sizes="57x57" href="./icons/57.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="./icons/60.png">
+ 	<link rel="apple-touch-icon" sizes="72x72" href="./icons/72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="./icons/76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="./icons/114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="./icons/120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="./icons/144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="./icons/152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="./icons/180.png">
+        <!-- Android icons -->
+ 	<link rel="icon" type="image/png" sizes="192x192" href="./icons/192.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="./icons/32.png">
+	<link rel="icon" type="image/png" sizes="96x96" href="./icons/96.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="./icons/16.png">
+	<!-- Windows icons -->
+	<meta name="msapplication-TileImage" content="./icons/144.png">
+	<!-- Windows dock color -->
+	<meta name="msapplication-TileColor" content="#fff">
+	<!-- Android dock color -->
+	<meta name="theme-color" content="#000">
+
+	<style type="text/css">
+		html, body
+		{
+			margin: 0;
+			height: 100%;
+			overflow: hidden;
+			background-color: black;
+			cursor: wait;
+		}
+		img
+		{
+			position: absolute;
+    			width: 100%;
+    			height: 100%;
+    			object-fit: contain;
+		}
+		.progress-label
+		{
+			position: absolute;
+			left: 45%;
+			top: 16px;
+			font-size: xx-large;
+			font-weight: bold;
+			text-shadow: 2px 2px 0 #fff;
+		}
+		.cache
+		{			
+			position:absolute;
+			z-index:-1000;
+			opacity:0; 
+			width:1px; 
+			height:1px;
+		}
+	</style>
+	<script type="text/javascript" language="javascript" src="./js/jquery-1.9.1.min.js"></script>
+	<script type="text/javascript" language="JavaScript">
+		const nFrames = 2765;
+		var mousedownID = -1;
+		$(window).load(function () {
+			preloadImages(nFrames, function () {
+				$("#progress-label").text("Complete!");
+				$("#whole").css("cursor", "pointer");
+				$("#im").css("cursor", "pointer");
+				$(im).attr("src", "./jpgframes/0_" + $("#i").val().padStart(5, "0") + ".jpg");
+				$("#im").css("visibility", "visible");
+				document.getElementById("im").addEventListener('click', startplay);
+			});
+		});
+		function preloadImages(toBeLoadedNumber, allImagesLoadedCallback) {
+			var loadedCounter = 0;
+			for (var i = 1; i <= toBeLoadedNumber; i++) {
+				preloadImage("./jpgframes/0_" + String(i).padStart(5, "0") + ".jpg", function () {
+					loadedCounter++;
+					$("#progress-label").text("Loading..." + Math.floor((100.0 * loadedCounter) / toBeLoadedNumber) + "%");
+					if (loadedCounter == toBeLoadedNumber) {
+						allImagesLoadedCallback();
+					}
+				});
+			}
+		}
+		function preloadImage(url, anImageLoadedCallback) {
+			var img = new Image();
+			img.onload = anImageLoadedCallback;
+			img.src = url;
+			img.style = "position:absolute";
+    			document.getElementById("cache").appendChild(img);
+		}
+		function startplay(event){
+			if($("#i").val()==1){
+				fullScreen(document.getElementById("im"));
+				$("#progress-label").hide();
+				$("#i").val("2");
+				document.getElementById("sound").play();
+			
+				document.getElementById("whole").addEventListener('keydown', keyboard); 
+				document.getElementById("im").addEventListener('mousedown', mousedown); 
+				document.getElementById("im").addEventListener('mouseup', mouseup); 
+				document.getElementById("im").addEventListener('touchstart', touch); 
+				document.getElementById("im").addEventListener('touchend', touch); 
+				event.target.removeEventListener('click', startplay);
+			}
+		}
+		function fullScreen(element) {
+			if(element.requestFullscreen) {
+				element.requestFullscreen();
+			} else if(element.webkitrequestFullscreen) {
+				element.webkitRequestFullscreen();
+			} else if(element.mozRequestFullscreen) {
+				element.mozRequestFullScreen();
+			}
+		}
+		function keyboard(event) {
+			var code=event.code;
+			if (code == "ArrowUp") 
+				setframe(0);
+			else if (code == "ArrowDown") 
+				setframe(2);
+		}
+		function mousedown(event) {
+			event.preventDefault();
+			var b = event.button;
+			if (mousedownID == -1) mousedownID = setInterval(setframe, 50, b);
+		}
+		function mouseup() {
+			event.preventDefault();
+			if (mousedownID != -1) {
+				clearInterval(mousedownID);
+				mousedownID = -1;
+			}
+		}
+		function touch(event) {
+			event.preventDefault();
+			var nfingers = event.touches.length;
+			mouseup();
+			var b = 1;
+			if (nfingers == 1)
+					b = 0;
+			else if (nfingers == 2)
+					b = 2;
+			if (mousedownID == -1) mousedownID = setInterval(setframe, 50, b);
+		}
+		function setframe(button) {
+			var i = parseInt($("#i").val());
+			if (button == 0 && i < nFrames) {
+				i = i + 1;
+			}
+			else if (button == 0 && i == nFrames) {
+				i = 2;
+			}
+			else if (button == 2 && i > 2) {
+				i = i - 1;
+			}
+			else if (button == 2 && i == 2) {
+				i = 2;
+			}
+			$("#i").val(i);
+			$(im).attr("src", "./jpgframes/0_" + $("#i").val().padStart(5, "0") + ".jpg");
+		}
+		function idle() { }
+	</script>
+	<title>Inhale</title>
+</head>
+<body>
+	<a href="javascript:idle()" id="whole" 
+		oncontextmenu="event.preventDefault(); return false;" 
+		ontouchmove="event.preventDefault(); return false;" 
+		ontouchcancel="event.preventDefault(); return false;" 
+		ontouchforcechange="event.preventDefault(); return false;"  
+		ongesturestart="event.preventDefault(); return false;"
+		ongesturechange="event.preventDefault(); return false;"
+		ongestureend="event.preventDefault(); return false;" 
+	>
+		<img id="im" src="" style="visibility: hidden;" 
+			oncontextmenu="event.preventDefault(); return false;" 
+			ontouchmove="event.preventDefault(); return false;" 
+			ontouchcancel="event.preventDefault(); return false;" 
+			ontouchforcechange="event.preventDefault(); return false;"  
+			ongesturestart="event.preventDefault(); return false;"
+			ongesturechange="event.preventDefault(); return false;"
+			ongestureend="event.preventDefault(); return false;"  
+		/>
+	</a>
+	<div id="progress-label" class="progress-label">Loading...</div>
+	<div id="cache" class="cache"></div>
+	<input type="hidden" name="i" id="i" value="1" />
+	<audio id="sound"  loop prealod="auto" >
+		  <source src="./sounds/Inhale.mp3" type="audio/mpeg">
+	</audio>
+</body>
+</html>
